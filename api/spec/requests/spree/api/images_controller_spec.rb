@@ -17,20 +17,34 @@ module Spree
 
     context "as an admin" do
       sign_in_as_admin!
+      context "can upload a new image"
+        it "for a variant" do
+          expect do
+            post spree.api_product_images_path(product.id), params: {
+              image: {
+                attachment: upload_image('thinking-cat.jpg'),
+                viewable_type: 'Spree::Variant',
+                viewable_id: product.master.to_param
+              },
+            }
+            expect(response.status).to eq(201)
+            expect(json_response).to have_attributes(attributes)
+          end.to change(Image, :count).by(1)
+        end
 
-      it "can upload a new image for a variant" do
-        expect do
-          post spree.api_product_images_path(product.id), params: {
-            image: {
-              attachment: upload_image('thinking-cat.jpg'),
-              viewable_type: 'Spree::Variant',
-              viewable_id: product.master.to_param
-            },
-          }
-          expect(response.status).to eq(201)
-          expect(json_response).to have_attributes(attributes)
-        end.to change(Image, :count).by(1)
-      end
+        it "from a valid URL" do
+          expect do
+            post spree.api_product_images_path(product.id), params: {
+              image: {
+                attachment: 'https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_92x30dp.png',
+                viewable_type: 'Spree::Variant',
+                viewable_id: product.master.to_param
+              },
+            }
+            expect(response.status).to eq(201)
+            expect(json_response).to have_attributes(attributes)
+          end.to change(Image, :count).by(1)
+        end
 
       context "working with an existing product image" do
         let!(:product_image) { product.master.images.create!(attachment: image('thinking-cat.jpg')) }

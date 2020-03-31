@@ -15,7 +15,11 @@ module Spree
 
       def create
         authorize! :create, Image
-        @image = scope.images.create(image_params)
+        if valid_url? image_params[:attachment]
+          @image = scope.images.create(attachment: open(image_params[:attachment]))
+        else
+          @image = scope.images.create(image_params)
+        end
         respond_with(@image, status: 201, default_template: :show)
       end
 
@@ -43,6 +47,13 @@ module Spree
         elsif params[:variant_id]
           Spree::Variant.find(params[:variant_id])
         end
+      end
+
+      def valid_url?(url)
+        uri = URI.parse url
+        uri.is_a?(URI::HTTP) && !uri.host.blank?
+        rescue URI::InvalidURIError
+        false
       end
     end
   end
